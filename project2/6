@@ -1,0 +1,7 @@
+<VirtualHost *:80>
+    ServerAdmin me@site2.com
+    DocumentRoot /var/www/site2
+    ServerName site2.local
+    ErrorLog /var/log/httpd/site2-error_log
+    CustomLog /var/log/httpd/site2-access_log combined
+</VirtualHost>
