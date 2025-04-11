@@ -1,0 +1,4 @@
+---
+# vars file for roles
+welcome_message_site1: "Welcome to site1"
+welcome_message_site2: "Welcome to site2"
