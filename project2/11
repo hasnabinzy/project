@@ -1,0 +1,6 @@
+---
+# defaults file for roles
+package: apache2
+service: apache2
+location: /var/www/html
+
