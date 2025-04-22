@@ -1,0 +1,25 @@
+roles
+├── defaults
+│   └── main.yml
+├── files
+│   ├── site1
+│   │   └── index.html
+│   └── site2
+│       └── index.html
+├── handlers
+│   └── main.yml
+├── meta
+│   └── main.yml
+├── README.md
+├── tasks
+│   └── main.yml
+├── templates
+│   ├── site1.conf.j2
+│   └── site2.conf.j2
+├── tests
+│   ├── inventory
+│   └── test.yml
+└── vars
+    └── main.yml
+
+10 directories, 12 files
