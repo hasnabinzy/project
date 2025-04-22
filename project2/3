@@ -1,7 +1,0 @@
-- name: Restart
-  service:
-    name: httpd
-    state: restarted
-
-- name: Reload firewall
-  shell: firewall-cmd --reload
