@@ -1,0 +1,12 @@
+<VirtualHost *:80>
+    ServerName site1.local
+    DocumentRoot /var/www/site1
+
+    <Directory /var/www/site1>
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    ErrorLog /var/log/apache2/site1_error.log
+    CustomLog /var/log/apache2/site1_access.log combined
+</VirtualHost>
