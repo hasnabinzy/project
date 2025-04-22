@@ -1,0 +1,4 @@
+---
+# vars file for roles
+welcome_message_site1: "Welcome to Synnefo Solutions..."
+welcome_message_site2: "Welcome to Novavi Pvt Ltd..."
