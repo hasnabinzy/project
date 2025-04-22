@@ -1,0 +1,5 @@
+- name: Setup Apache Web Server
+  hosts: all
+  roles:
+    - roles
+
