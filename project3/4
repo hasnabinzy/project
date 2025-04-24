@@ -1,0 +1,55 @@
+pipeline {
+    agent any
+    environment {
+        DOCKER_IMAGE = 'my-app'
+        ECR_REPO = 'aws_account_id.dkr.ecr.region.amazonaws.com/my-app'
+        AWS_DEFAULT_REGION = 'us-west-2'
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/your-repo/my-app.git'
+            }
+        }
+        stage('Install Dependencies') {
+            steps {
+                script {
+                    sh 'npm install'
+                }
+            }
+        }
+        stage('Run Tests') {
+            steps {
+                script {
+                    sh 'npm test'
+                }
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    sh 'docker build -t $DOCKER_IMAGE .'
+                }
+            }
+        }
+        stage('Push Docker Image to ECR') {
+            steps {
+                script {
+                    sh """
+                        $(aws ecr get-login --no-include-email --region $AWS_DEFAULT_REGION)
+                        docker tag $DOCKER_IMAGE:latest $ECR_REPO:latest
+                        docker push $ECR_REPO:latest
+                    """
+                }
+            }
+        }
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    sh 'kubectl apply -f k8s/deployment.yaml'
+                    sh 'kubectl apply -f k8s/service.yaml'
+                }
+            }
+        }
+    }
+}
