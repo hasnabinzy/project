@@ -1,0 +1,109 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_REPO = 'hasnabinzy/node-app:latest'
+    }
+
+    stages {
+        stage('📥 Clone Repository') {
+            steps {
+                git branch: 'main', url: 'https://github.com/hasnabinzy/Node.js.git'
+            }
+        }
+
+        stage('📦 Install Dependencies') {
+            steps {
+                sh 'npm install'
+            }
+        }
+
+        stage('✅ Run Tests') {
+            steps {
+                sh 'npm test' // You can replace this with actual tests later
+            }
+        }
+
+        stage('🐳 Build Docker Image') {
+            steps {
+                script {
+                    sh "docker build -t hasnabinzy/node-app:latest ."
+                }
+            }
+        }
+
+        stage('📤 Push Docker Image to GHCR') {
+            when {
+                branch 'main' // Only run this stage for 'main' branch (or adjust as needed)
+            }
+            steps {
+                script {
+                    sh "docker push hasnabinzy/node-app:latest"
+                }
+            }
+        }
+
+        stage('🚀 Deploy to Minikube') {
+            when {
+                branch 'main' // Only deploy for the 'main' branch (or adjust as needed)
+            }
+            steps {
+                script {
+                    // Replace this with your deployment to Minikube commands
+                    sh 'kubectl apply -f deployment.yaml' // Assuming you have a deployment.yaml
+                }
+            }
+        }
+
+        stage('🔁 Rolling Update') {
+            when {
+                branch 'main' // Adjust based on the branch where you want rolling updates
+            }
+            steps {
+                script {
+                    // Replace this with your rolling update commands
+                    sh 'kubectl rollout restart deployment node-app'
+                }
+            }
+        }
+
+        stage('🧪 Canary Deployment') {
+            when {
+                branch 'main' // Adjust based on your canary deployment strategy
+            }
+            steps {
+                script {
+                    // Replace with canary deployment commands
+                    sh 'kubectl apply -f canary-deployment.yaml'
+                }
+            }
+        }
+
+        stage('📊 Monitor Deployment') {
+            when {
+                branch 'main' // Monitor only for the main branch (or adjust as needed)
+            }
+            steps {
+                script {
+                    // Replace with your monitoring logic
+                    sh 'kubectl get pods'
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            // Clean up Docker resources after the pipeline runs
+            sh 'docker system prune -f -a --volumes'
+        }
+        success {
+            // Actions to take when the pipeline succeeds
+            echo 'Pipeline executed successfully!'
+        }
+        failure {
+            // Actions to take if the pipeline fails
+            echo 'Pipeline failed. Please check the logs.'
+        }
+    }
+}
