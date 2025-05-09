@@ -10,5 +10,5 @@ spec:
       port: 3000          # Port exposed by the service
       targetPort: 3000    # Port the application is running on inside the container
       nodePort: 30001     # NodePort within the valid range (30000-32767)
-  type: NodePort         # This makes the service accessible externally through the node port
+ 
 
