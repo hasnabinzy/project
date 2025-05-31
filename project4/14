@@ -1,0 +1,112 @@
+pipeline {
+  agent any
+
+  environment {
+    DOCKERHUB_CREDENTIALS = credentials('815286b6-ff7a-4a61-99d4-769c86d7f133')
+    DOCKER_IMAGE_PRODUCT = 'hasnabinzy/product-service'
+    DOCKER_IMAGE_PAYMENT = 'hasnabinzy/payment-service'
+    KUBECONFIG = '/home/synnefo/.kube/config'
+  }
+ stages {
+    stage('Checkout') {
+      steps {
+        echo '📦 Cloning source code...'
+        git url: 'https://github.com/hasnabinzy/micro.git', branch: 'main'
+      }
+    }
+  stage('Install Dependencies') {
+      steps {
+        echo '📦 Installing npm dependencies...'
+        sh 'npm install'
+      }
+    }
+   stage('Run Tests') {
+      steps {
+        echo '🧪 Running tests (if defined)...'
+        sh '''
+          if [ -f package.json ] && grep -q '"test":' package.json; then
+            npm test
+          else
+            echo "⚠️  No test script found in package.json. Skipping tests..."
+          fi
+        '''
+      }
+    }
+
+    stage('Build Docker Images') {
+      steps {
+        echo '🐳 Building Docker images...'
+        sh '''
+          ls -la  # Debugging: ensure Dockerfile is present
+          docker build -t hasnabinzy/combined-service:latest -f Dockerfile .
+          docker build -t hasnabinzy/payment-service -f Dockerfile .
+          docker build -t hasnabinzy/product-service -f Dockerfile .
+        '''
+      }
+    }
+
+    stage('Push to Docker Hub') {
+      steps {
+        echo '🚀 Pushing Docker images to Docker Hub...'
+        sh '''
+          echo "dckr_pat_XGhKHZBS7cDQObq1O8RzyhwlkpA" | docker login -u "hasnabinzy" --password-stdin
+          docker push hasnabinzy/product-service
+          docker push hasnabinzy/payment-service
+          docker push hasnabinzy/combined-service:latest
+        '''
+      }
+    }
+
+    stage('Deploy to Kubernetes') {
+      steps {
+        echo '📤 Applying Kubernetes manifests...'
+        sh '''
+          kubectl apply -f /home/synnefo/project4/micro/paysercon.yaml
+          kubectl apply -f /home/synnefo/project4/micro/payserdep.yaml
+          kubectl apply -f /home/synnefo/project4/micro/payserb.yaml
+          kubectl apply -f /home/synnefo/project4/micro/payserg.yaml
+          kubectl apply -f /home/synnefo/project4/micro/paysering.yaml
+
+          kubectl apply -f /home/synnefo/project4/micro/prosercon.yaml
+          kubectl apply -f /home/synnefo/project4/micro/proserdep.yaml
+          kubectl apply -f /home/synnefo/project4/micro/proserb.yaml
+          kubectl apply -f /home/synnefo/project4/micro/proserg.yaml
+          kubectl apply -f /home/synnefo/project4/micro/prosering.yaml
+        '''
+      }
+    }
+
+    stage('Health Check') {
+      steps {
+        echo '🔍 Verifying service health...'
+        sh '''
+          for endpoint in /product /payment; do
+            echo "🔁 Checking $endpoint service on ClusterIP..."
+            for i in {1..10}; do
+              curl -f http://172.16.88.103:1000$endpoint && break || sleep 5
+            done
+          done
+
+          echo "🔁 Checking /product service on NodePort 30010..."
+          for i in {1..10}; do
+            curl -f http://192.168.49.2:30010/product && break || sleep 5
+          done
+
+          echo "🔁 Checking /payment service on NodePort 30020..."
+          for i in {1..10}; do
+            curl -f http://192.168.49.2:30020/payment && break || sleep 5
+          done
+        '''
+      }
+    }
+  }
+
+  post {
+    success {
+      echo '✅ Microservices deployed and running successfully!'
+    }
+    failure {
+      echo '❌ Deployment failed. Please check logs above.'
+    }
+  }
+}
